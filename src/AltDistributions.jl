@@ -45,7 +45,7 @@ struct AltMvNormal{M <: AbstractVector,T <: CovarianceFactor}
 
     Inner constructor used internally, for specifying `L` directly when the first argument is `Val{:L}`.
 
-    You *don't* want to use this, use a `Cholesky` factorization instead.
+    You **don't want to use this unless you obtain `L` directly**. Use a `Cholesky` factorization instead.
     """
     function AltMvNormal(::Val{:L}, μ::M, L::T) where {M <: AbstractVector,
                                                        T <: CovarianceFactor}
@@ -90,17 +90,17 @@ struct LKJL{T <: Real}
     The LKJ distribution (Lewandowski et al 2009) for the Cholesky factor L of correlation
     matrices.
 
-    A correlation matrix ``Ω=LL'`` has the density ``|Ω|^(η-1)``. However, it is usually not
-    necessary to construct ``Ω``, so this function is parametrized in terms of a Cholesky
+    A correlation matrix ``Ω=LL'`` has the density ``|Ω|^{η-1}``. However, it is usually not
+    necessary to construct ``Ω``, so this distribution is formulated for the Cholesky
     decomposition `L*L'`, and takes `L` directly.
 
-    Note that this function **does not check if `L` yields a valid correlation matrix**.
+    Note that the methods **does not check if `L` yields a valid correlation matrix**.
 
-    Valid values are ``η > 0``. When ``η > 1``, the distribution is unimodal at the
-    identity, while ``0 < η < 1`` has a trough. ``η = 2`` is recommended as a vague prior.
+    Valid values are ``η > 0``. When ``η > 1``, the distribution is unimodal at `Ω=I`, while
+    ``0 < η < 1`` has a trough. ``η = 2`` is recommended as a vague prior.
 
-    When ``η = 1``, the density is uniform. Note however that the function should still be
-    invoked, because of the Jacobian correction of the transformation.
+    When ``η = 1``, the density is uniform in `Ω`, but not in `L`, because of the Jacobian
+    correction of the transformation.
     """
     function LKJL(η::T) where T <: Real
         @argcheck η > 0
