@@ -56,12 +56,13 @@ end
 @testset "LKJL" begin
     n = 7
     Ω, L = randΩL(n)
+    η = abs2(randn())
     J_full = jacobian(lowerdiag_to_vec(L)) do z
         L = vec_to_lowerdiag(z, n)
         Ω = L*L'
         lowerdiag_to_vec(Ω)
     end
-    @test logdet(J_full) ≈ logpdf(LKJL(1.0), L)
+    @test logdet(J_full) + logdet(Ω)*(η-1) ≈ logpdf(LKJL(η), L)
 end
 
 @testset "AltMvNormal" begin
