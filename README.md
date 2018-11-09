@@ -17,3 +17,7 @@ This is a collection of some probability distributions I find useful, primarily 
 3. not all functionality is implemented (eg only the `logpdf`).
 
 When the name of distributions coincides with one in `Distributions`, it is prefixed with `Alt`, eg `AltMvNormal`.
+
+## Bibliography
+
+- Lewandowski, Daniel, Dorota Kurowicka, and Harry Joe. "Generating random correlation matrices based on vines and extended onion method." Journal of multivariate analysis 100.9 (2009): 1989–2001.
