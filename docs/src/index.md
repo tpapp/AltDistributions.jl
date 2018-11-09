@@ -1,0 +1,6 @@
+# AltDistributions
+
+```@docs
+AltMvNormal
+LKJL
+```
