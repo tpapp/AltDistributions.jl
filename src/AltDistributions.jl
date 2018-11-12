@@ -1,12 +1,14 @@
 module AltDistributions
 
-export AltMvNormal, LKJL
+export AltMvNormal, LKJL, StdCorrFactor
 
 using ArgCheck: @argcheck
+import Base: \, size, getindex
 import Distributions: logpdf
 using DocStringExtensions: SIGNATURES
 using LinearAlgebra
 using LinearAlgebra: checksquare, AbstractTriangular
+import LinearAlgebra: logdet
 using Parameters: @unpack
 
 
@@ -30,6 +32,30 @@ function conforming_μL(μ::AbstractVector, L::AbstractMatrix)
 end
 
 conforming_μL(μ::AbstractVector, ::UniformScaling) = true
+
+struct StdCorrFactor{V <: AbstractVector, S <: CovarianceFactor, T} <: AbstractMatrix{T}
+    σ::V
+    F::S
+    @doc """
+    $(SIGNATURES)
+
+    A factor `L` of a covariance matrix `Σ = LL'` given as `L = Diagonal(σ) * F`. Can be
+    used in place of `L`, without performing the multiplication.
+    """
+    function StdCorrFactor(σ::V, F::S) where {V <: AbstractVector, S <: CovarianceFactor}
+        T = typeof(one(eltype(F)) * one(eltype(σ)))
+        @argcheck conforming_μL(σ, F)
+        new{V,S,T}(σ, F)
+    end
+end
+
+\(L::StdCorrFactor, y::Union{AbstractVector,AbstractMatrix}) = L.F \ (L.σ .\ y)
+
+size(L::StdCorrFactor) = (n = length(L.σ); (n, n))
+
+getindex(L::StdCorrFactor, I::Vararg{Int,2}) = getindex(Diagonal(L.σ) * L.F, I...) # just for printing
+
+logdet(L::StdCorrFactor) = sum(log, L.σ) + logdet(L.F)
 
 
 # AltMvNormal
@@ -64,6 +90,13 @@ abstract matrix (eg a factorization) or `I`. If `Σ` is not symetric because of 
 error, wrap in `LinearAlgebra.Symmetric`.
 
 Use the `AltMvNormal(Val(:L), μ, L)` constructor for using `LL'=Σ` directly.
+
+Also, see [`StdCorrFactor`](@ref) for formulating `L` from standard deviations and a
+Cholesky factor of a *correlation* matrix:
+
+```julia
+AltMvNormal(μ, StdCorrFactor(σ, S))
+```
 """
 function AltMvNormal(μ::AbstractVector, Σ::AbstractMatrix)
     @argcheck issymmetric(Σ) "Σ is not symmetric. Try wrapping in `LinearAlgebra.Symmetric`."

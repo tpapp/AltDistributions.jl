@@ -2,5 +2,6 @@
 
 ```@docs
 AltMvNormal
+StdCorrFactor
 LKJL
 ```
