@@ -41,13 +41,17 @@ end
 "Random covariance matrix."
 randΣ(n) = (A = randn(n, n); A'*A)
 
-"Random correlation matrix `Ω` and its Cholesky factor `L` such that `LL'=Ω`."
-function randΩL(n)
+"""
+Random correlation matrix `Ω` and its Cholesky factor `F` such that `FF'=Ω`. The standard
+deviations `σ` are returned as the 3rd value.
+"""
+function randΩFσ(n)
     Σ = randΣ(n)
-    d = Diagonal(.√diag(Σ))
+    σ = .√diag(Σ)
+    d = Diagonal(σ)
     Ω = Symmetric(d \ Σ / d)
-    L = cholesky(Ω).L
-    Ω, L
+    F = cholesky(Ω).L
+    Ω, F, σ
 end
 
 
@@ -55,14 +59,13 @@ end
 
 @testset "LKJL" begin
     n = 7
-    Ω, L = randΩL(n)
+    Ω, F, _ = randΩFσ(n)
     η = abs2(randn())
-    J_full = jacobian(lowerdiag_to_vec(L)) do z
-        L = vec_to_lowerdiag(z, n)
-        Ω = L*L'
-        lowerdiag_to_vec(Ω)
+    J_full = jacobian(lowerdiag_to_vec(F)) do z
+        F = vec_to_lowerdiag(z, n)
+        lowerdiag_to_vec(F*F')
     end
-    @test logdet(J_full) + logdet(Ω)*(η-1) ≈ logpdf(LKJL(η), L)
+    @test logdet(J_full) + logdet(Ω)*(η-1) ≈ logpdf(LKJL(η), F)
 end
 
 @testset "AltMvNormal" begin
@@ -105,6 +108,19 @@ end
             d = abs2.(randn(n))
             Σ = Diagonal(d)
             @test logpdf(MvNormal(μ, Σ), x) ≈ logpdf(AltMvNormal(μ, Σ), x)
+        end
+    end
+
+    @testset "plain vanilla covariance matrix" begin
+        for _ in 1:1000
+            n = rand(ns)
+            μ = randn(n)
+            Ω, F, σ = randΩFσ(n)
+            L = Diagonal(σ)*F
+            Σ = L*L'
+            G = StdCorrFactor(σ, F)
+            x = randn(n)
+            @test logpdf(MvNormal(μ, Σ), x) ≈ logpdf(AltMvNormal(Val(:L), μ, G), x) rtol = 1e-6
         end
     end
 
