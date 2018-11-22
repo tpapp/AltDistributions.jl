@@ -146,3 +146,19 @@ end
         @test logpdf(a, Fixed(x)) - logpdf(a′, Fixed(x)) ≈ logpdf(m, x) - logpdf(m′, x)
     end
 end
+
+@testset "AltBinomial" begin
+    n = 10
+    p = 0.1
+    p′ = 0.25
+    a = AltBinomial(n, p)
+    a′ = AltBinomial(n, p′)
+    b = Binomial(n, p)
+    b′ = Binomial(n, p′)
+    for _ in 1:100
+        x = rand(a)
+        @test 0 ≤ x::Int ≤ n
+        @test logpdf(a, x) ≈ logpdf(b, x)
+        @test logpdf(a, Fixed(x)) - logpdf(a′, Fixed(x)) ≈ logpdf(b, x) - logpdf(b′, x)
+    end
+end

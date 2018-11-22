@@ -1,6 +1,6 @@
 module AltDistributions
 
-export Fixed, AltMvNormal, LKJL, StdCorrFactor, AltMultinomial
+export Fixed, AltMvNormal, LKJL, StdCorrFactor, AltMultinomial, AltBinomial
 
 using ArgCheck: @argcheck
 import Base: \, size, getindex, get, convert
@@ -15,7 +15,7 @@ using Parameters: @unpack
 using Random: rand, SamplerTrivial, Random, AbstractRNG
 import Random: rand
 using StatsFuns: xlogy
-using SpecialFunctions: lfactorial
+using SpecialFunctions: lbinomial, lfactorial
 
 
 # utilities
@@ -236,6 +236,36 @@ function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltMultinomial})
     probabilities = vcat(partial_probabilities, 1 - sum(partial_probabilities))
     Distributions.multinom_rand!(total_count, probabilities, x)
     x
+end
+
+struct AltBinomial{T <: Integer, P <: Real}
+    total_count::T
+    probability::P
+    @doc """
+    $(SIGNATURES)
+
+    Binomial distribution for the given `total_count` and `probability`.
+    """
+    function AltBinomial(total_count::T, probability::P) where {T <: Integer, P <: Real}
+        @argcheck 0 ≤ probability ≤ 1
+        new{T, P}(total_count, probability)
+    end
+end
+
+function logpdf(distribution::AltBinomial, fixed_count::Fixed{<:Integer})
+    @unpack total_count, probability = distribution
+    k = get(fixed_count)
+    xlogy(k, probability) + xlogy(total_count - k, 1 - probability)
+end
+
+function logpdf(distribution::AltBinomial, count::Integer)
+    lbinomial(distribution.total_count, count) + logpdf(distribution, Fixed(count))
+end
+
+function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltBinomial})
+    @unpack total_count, probability = sampler[]
+    # this is inefficient, but cheap to implement
+    first(rand(rng, AltMultinomial(total_count, [probability])))
 end
 
 end # module
