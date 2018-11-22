@@ -1,15 +1,21 @@
 module AltDistributions
 
-export AltMvNormal, LKJL, StdCorrFactor
+export Fixed, AltMvNormal, LKJL, StdCorrFactor, AltMultinomial
 
 using ArgCheck: @argcheck
-import Base: \, size, getindex
+import Base: \, size, getindex, get, convert
+using Base.Math: cbrt
+using Distributions: Multinomial, Distributions
 import Distributions: logpdf
 using DocStringExtensions: SIGNATURES
 using LinearAlgebra
 using LinearAlgebra: checksquare, AbstractTriangular
 import LinearAlgebra: logdet
 using Parameters: @unpack
+using Random: rand, SamplerTrivial, Random, AbstractRNG
+import Random: rand
+using StatsFuns: xlogy
+using SpecialFunctions: lfactorial
 
 
 # utilities
@@ -56,6 +62,30 @@ size(L::StdCorrFactor) = (n = length(L.σ); (n, n))
 getindex(L::StdCorrFactor, I::Vararg{Int,2}) = getindex(Diagonal(L.σ) * L.F, I...) # just for printing
 
 logdet(L::StdCorrFactor) = sum(log, L.σ) + logdet(L.F)
+
+"""
+    Fixed(value)
+
+Wrapper type to signal that `value` is "fixed" for the purposes of a log density
+calculation. Formally,
+
+```julia
+logpdf(d, Fixed(v)) == logpdf(d, v) + C
+```
+
+where `C` is a constant term that only depends on `v`. In other words,
+
+```julia
+logpdf(distribution(θ), Fixed(v)) - logpdf(distribution(θ′), Fixed(v))
+```
+
+should always be correctly calculated. Use `get(Fixed(value)` to access the value.
+"""
+struct Fixed{T}
+    value::T
+end
+
+get(f::Fixed) = f.value
 
 
 # AltMvNormal
@@ -146,6 +176,66 @@ function logpdf(d::LKJL, L::Union{AbstractTriangular, Diagonal})
     z = diag(L)
     n = size(L, 1)
     sum(log.(z) .* ((n:-1:1) .+ 2*(η-1))) + log(2) * n
+end
+
+
+# AltBinomial and AltMultinomial
+
+struct AltMultinomial{T <: Integer, V <: AbstractVector{<:Real}}
+    total_count::T
+    partial_probabilities::V
+    @doc """
+    $(SIGNATURES)
+
+    Multinomial distribution for the given `total_count`. The last probability should not be
+    specified, as it is calculated as a residual. Small numerical error is tolerated,
+    negative probabilities are not.
+    """
+    function AltMultinomial(total_count::T, partial_probabilities::V
+                            ) where {T <: Integer, V <: AbstractVector{<:Real}}
+        @argcheck all(partial_probabilities .≥ 0)
+        new{T,V}(total_count, partial_probabilities)
+    end
+end
+
+function logpdf(distribution::AltMultinomial, fixed_counts::Fixed)
+    @unpack partial_probabilities = distribution
+    counts = get(fixed_counts)
+    @argcheck length(counts) == length(partial_probabilities) + 1
+    P = eltype(partial_probabilities)
+    total_p = zero(P)
+    ℓ = xlogy(zero(eltype(counts)), zero(P))
+    for (c, p) in zip(counts, partial_probabilities)
+        ℓ += xlogy(c, p)
+        total_p += p
+    end
+    rem_p = 1 - total_p
+    if rem_p ≥ 0
+        ℓ += xlogy(counts[end], rem_p)
+    elseif rem_p ≤ -cbrt(eps(P))
+        # otherwise we quietly ignore
+        throw(DomainError(rem_p, "remainder probability is negative"))
+    end
+    ℓ
+end
+
+function logpdf(distribution::AltMultinomial, counts)
+    @unpack total_count = distribution
+    @argcheck total_count == sum(counts)
+    ℓ = lfactorial(total_count)
+    for c in counts
+        ℓ -= lfactorial(c)
+    end
+    ℓ + logpdf(distribution, Fixed(counts))
+end
+
+function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltMultinomial})
+    distribution = sampler[]
+    @unpack total_count, partial_probabilities = distribution
+    x = Vector{Int}(undef, length(partial_probabilities) + 1)
+    probabilities = vcat(partial_probabilities, 1 - sum(partial_probabilities))
+    Distributions.multinom_rand!(total_count, probabilities, x)
+    x
 end
 
 end # module

@@ -129,3 +129,20 @@ end
         @test_throws DimensionMismatch logpdf(AltMvNormal(ones(3), Diagonal(ones(3))), ones(2))
     end
 end
+
+@testset "AltMultinomial" begin
+    n = 10
+    p = [0.1, 0.2]
+    p′ = [0.25, 0.4]
+    a = AltMultinomial(n, p)
+    a′ = AltMultinomial(n, p′)
+    m = Multinomial(n, vcat(p, [1-sum(p)]))
+    m′ = Multinomial(n, vcat(p′, [1-sum(p′)]))
+    for _ in 1:100
+        x = rand(a)
+        @test sum(x::Vector{Int}) == n
+        @test length(x) == length(p) + 1
+        @test logpdf(a, x) ≈ logpdf(m, x)
+        @test logpdf(a, Fixed(x)) - logpdf(a′, Fixed(x)) ≈ logpdf(m, x) - logpdf(m′, x)
+    end
+end
