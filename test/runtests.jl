@@ -128,6 +128,17 @@ end
         @test_throws ArgumentError AltMvNormal(ones(3), Diagonal(ones(2)))
         @test_throws DimensionMismatch logpdf(AltMvNormal(ones(3), Diagonal(ones(3))), ones(2))
     end
+
+    @testset "random draws" begin
+        N = 100000
+        μ = [1.0, 2.0]
+        Σ = Symmetric([1.0 0.5;
+                       0.5 4.0])
+        d = AltMvNormal(μ, Σ)
+        zs = reduce(hcat, rand(d, N))
+        @test vec(mean(zs, dims = 2)) ≈ μ atol = 0.01
+        @test cov(zs, dims = 2) ≈ Σ atol = 0.01
+    end
 end
 
 @testset "AltMultinomial" begin
