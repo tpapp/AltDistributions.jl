@@ -142,6 +142,11 @@ function logpdf(d::AltMvNormal, x::AbstractVector)
     -0.5*length(μ)*log(2*π) - logdet(L) - 0.5*sum(abs2, L \ (x .- μ))
 end
 
+function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltMvNormal})
+    @unpack μ, L = sampler[]
+    L * randn(rng, length(μ)) .+ μ
+end
+
 
 # LKJL
 
