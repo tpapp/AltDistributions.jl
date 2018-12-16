@@ -3,22 +3,21 @@ module AltDistributions
 export Fixed, AltMvNormal, LKJL, StdCorrFactor, AltMultinomial, AltBinomial
 
 using ArgCheck: @argcheck
-import Base: \, size, getindex, get, convert
 using Base.Math: cbrt
 using Distributions: Multinomial, Distributions
 import Distributions: logpdf
 using DocStringExtensions: SIGNATURES
 using LinearAlgebra
 using LinearAlgebra: checksquare, AbstractTriangular
-import LinearAlgebra: logdet
 using Parameters: @unpack
 using Random: rand, SamplerTrivial, Random, AbstractRNG
 import Random: rand
 using StatsFuns: xlogy
 using SpecialFunctions: lbinomial, lfactorial
 
-
-# utilities
+####
+#### utilities
+####
 
 """
 Types accepted as a factor `L` of a covariance matrix `Σ=LL'`.
@@ -55,13 +54,13 @@ struct StdCorrFactor{V <: AbstractVector, S <: CovarianceFactor, T} <: AbstractM
     end
 end
 
-\(L::StdCorrFactor, y::Union{AbstractVector,AbstractMatrix}) = L.F \ (L.σ .\ y)
+Base.:\(L::StdCorrFactor, y::Union{AbstractVector,AbstractMatrix}) = L.F \ (L.σ .\ y)
 
-size(L::StdCorrFactor) = (n = length(L.σ); (n, n))
+Base.size(L::StdCorrFactor) = (n = length(L.σ); (n, n))
 
-getindex(L::StdCorrFactor, I::Vararg{Int,2}) = getindex(Diagonal(L.σ) * L.F, I...) # just for printing
+Base.getindex(L::StdCorrFactor, I::Vararg{Int,2}) = getindex(Diagonal(L.σ) * L.F, I...) # just for printing
 
-logdet(L::StdCorrFactor) = sum(log, L.σ) + logdet(L.F)
+LinearAlgebra.logdet(L::StdCorrFactor) = sum(log, L.σ) + logdet(L.F)
 
 """
     Fixed(value)
@@ -87,8 +86,9 @@ end
 
 get(f::Fixed) = f.value
 
-
-# AltMvNormal
+####
+#### AltMvNormal
+####
 
 struct AltMvNormal{M <: AbstractVector,T <: CovarianceFactor}
     "mean"
@@ -147,8 +147,9 @@ function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltMvNormal})
     L * randn(rng, length(μ)) .+ μ
 end
 
-
-# LKJL
+####
+#### LKJL
+####
 
 struct LKJL{T <: Real}
     η::T
@@ -183,8 +184,9 @@ function logpdf(d::LKJL, L::Union{AbstractTriangular, Diagonal})
     sum(log.(z) .* ((n:-1:1) .+ 2*(η-1))) + log(2) * n
 end
 
-
-# AltBinomial and AltMultinomial
+####
+#### AltBinomial and AltMultinomial
+####
 
 struct AltMultinomial{T <: Integer, V <: AbstractVector{<:Real}}
     total_count::T
