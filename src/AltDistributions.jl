@@ -10,10 +10,10 @@ using DocStringExtensions: SIGNATURES
 using LinearAlgebra
 using LinearAlgebra: checksquare, AbstractTriangular
 using Parameters: @unpack
-using Random: rand, SamplerTrivial, Random, AbstractRNG
+using Random: SamplerTrivial, Random, AbstractRNG
 import Random: rand
-using StatsFuns: xlogy
-using SpecialFunctions: lbinomial, lfactorial
+using LogExpFunctions: xlogy
+using SpecialFunctions: logabsbinomial, logfactorial
 
 ####
 #### utilities
@@ -229,9 +229,9 @@ end
 function logpdf(distribution::AltMultinomial, counts)
     @unpack total_count = distribution
     @argcheck total_count == sum(counts)
-    ℓ = lfactorial(total_count)
+    ℓ = logfactorial(total_count)
     for c in counts
-        ℓ -= lfactorial(c)
+        ℓ -= logfactorial(c)
     end
     ℓ + logpdf(distribution, Fixed(counts))
 end
@@ -241,7 +241,7 @@ function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltMultinomial})
     @unpack total_count, partial_probabilities = distribution
     x = Vector{Int}(undef, length(partial_probabilities) + 1)
     probabilities = vcat(partial_probabilities, 1 - sum(partial_probabilities))
-    Distributions.multinom_rand!(total_count, probabilities, x)
+    Distributions.multinom_rand!(rng, total_count, probabilities, x)
     x
 end
 
@@ -266,7 +266,7 @@ function logpdf(distribution::AltBinomial, fixed_count::Fixed{<:Integer})
 end
 
 function logpdf(distribution::AltBinomial, count::Integer)
-    lbinomial(distribution.total_count, count) + logpdf(distribution, Fixed(count))
+    first(logabsbinomial(distribution.total_count, count)) + logpdf(distribution, Fixed(count))
 end
 
 function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltBinomial})

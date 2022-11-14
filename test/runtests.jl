@@ -3,8 +3,9 @@ using ForwardDiff: jacobian
 
 Random.seed!(1)
 
-
-# utilities
+####
+#### utilities
+####
 
 "Elements below the diagonal as a vector (by row)."
 lower_to_vec(L) = vcat((L[i, 1:(i-1)] for i in 1:size(L, 1))...)
@@ -54,8 +55,9 @@ function randΩFσ(n)
     Ω, F, σ
 end
 
-
-# tests
+####
+#### tests
+####
 
 @testset "LKJL" begin
     n = 7
@@ -71,7 +73,7 @@ end
 @testset "AltMvNormal" begin
     ns = 3:7
 
-    @testset "plain vanilla covariance matrix" begin
+    @testset "unrestricted covariance matrix" begin
         for _ in 1:1000
             n = rand(ns)
             μ = randn(n)
@@ -111,7 +113,7 @@ end
         end
     end
 
-    @testset "plain vanilla covariance matrix" begin
+    @testset "full covariance matrix, constructed from factorization" begin
         for _ in 1:1000
             n = rand(ns)
             μ = randn(n)
@@ -136,7 +138,7 @@ end
                        0.5 4.0])
         d = AltMvNormal(μ, Σ)
         zs = reduce(hcat, rand(d, N))
-        @test vec(mean(zs, dims = 2)) ≈ μ atol = 0.01
+        @test vec(mean(zs, dims = 2)) ≈ μ atol = 0.02
         @test cov(zs, dims = 2) ≈ Σ atol = 0.03
     end
 end
