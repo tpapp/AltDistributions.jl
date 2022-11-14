@@ -15,6 +15,7 @@ SpecialFunctions = "276daf66-3868-5448-9aa4-cd146d93841b"
 StatsFuns = "4c63d2b9-4356-54db-8cca-17b64c39e42c"
 
 [compat]
+ForwardDiff = "0.10"
 StatsFuns = "1"
 
 [extras]
