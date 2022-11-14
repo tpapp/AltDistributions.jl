@@ -20,6 +20,7 @@ DocStringExtensions = "0.9"
 Distributions = "0.25"
 ForwardDiff = "0.10"
 StatsFuns = "1"
+Parameters = "0.12"
 
 [extras]
 ForwardDiff = "f6369f11-7733-5829-9624-2563aa707210"
