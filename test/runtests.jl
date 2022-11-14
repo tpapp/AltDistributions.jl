@@ -137,7 +137,7 @@ end
         d = AltMvNormal(μ, Σ)
         zs = reduce(hcat, rand(d, N))
         @test vec(mean(zs, dims = 2)) ≈ μ atol = 0.01
-        @test cov(zs, dims = 2) ≈ Σ atol = 0.01
+        @test cov(zs, dims = 2) ≈ Σ atol = 0.03
     end
 end
 
