@@ -1,14 +1,14 @@
-# AltDistributions
+# AltDistributions.jl
 
-![Lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg)<!--
-![Lifecycle](https://img.shields.io/badge/lifecycle-maturing-blue.svg)
-![Lifecycle](https://img.shields.io/badge/lifecycle-stable-green.svg)
-![Lifecycle](https://img.shields.io/badge/lifecycle-retired-orange.svg)
-![Lifecycle](https://img.shields.io/badge/lifecycle-archived-red.svg)
-![Lifecycle](https://img.shields.io/badge/lifecycle-dormant-blue.svg) -->
-[![Build Status](https://travis-ci.org/tpapp/AltDistributions.jl.svg?branch=master)](https://travis-ci.org/tpapp/AltDistributions.jl)
+![lifecycle](https://img.shields.io/badge/lifecycle-experimental-orange.svg)
+[![build](https://github.com/tpapp/AltDistributions.jl/workflows/CI/badge.svg)](https://github.com/tpapp/AltDistributions.jl/actions?query=workflow%3ACI)
 [![codecov.io](http://codecov.io/github/tpapp/AltDistributions.jl/coverage.svg?branch=master)](http://codecov.io/github/tpapp/AltDistributions.jl?branch=master)
+
+<!-- Documentation -- uncomment or delete as needed -->
+<!--
+[![Documentation](https://img.shields.io/badge/docs-stable-blue.svg)](https://tpapp.github.io/AltDistributions.jl/stable)
 [![Documentation](https://img.shields.io/badge/docs-master-blue.svg)](https://tpapp.github.io/AltDistributions.jl/dev)
+-->
 
 This is a collection of some probability distributions I find useful, primarily for Bayesian estimation. Eventually, they should be considered for contributing to [Distributions.jl](https://github.com/JuliaStats/Distributions.jl), but currently they reside in this package because
 
