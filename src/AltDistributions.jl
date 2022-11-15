@@ -90,12 +90,14 @@ get(f::Fixed) = f.value
 #### AltMvNormal
 ####
 
-struct AltMvNormal{M <: AbstractVector,T <: CovarianceFactor}
+Base.@kwdef struct AltMvNormal{M <: AbstractVector,T <: CovarianceFactor, S <: Real}
     "mean"
     μ::M
     "Cholesky factor, `L*L'` is the variance matrix. `L` can be *any* conformable matrix
     (or matrix-like object, eg UniformScaling), triangularity etc are not imposed."
     L::T
+    "logdet(L), cached"
+    logdet_L::S
     @doc """
     $(SIGNATURES)
 
@@ -106,7 +108,8 @@ struct AltMvNormal{M <: AbstractVector,T <: CovarianceFactor}
     function AltMvNormal(::Val{:L}, μ::M, L::T) where {M <: AbstractVector,
                                                        T <: CovarianceFactor}
         @argcheck conforming_μL(μ, L) "Non-conformable mean and variance factor."
-        new{M, T}(μ, L)
+        logdet_L = logdet(L)
+        new{M, T, typeof(logdet_L)}(μ, L, logdet_L)
     end
 end
 
@@ -138,8 +141,8 @@ AltMvNormal(μ::AbstractVector, Σ::Diagonal) = AltMvNormal(Val{:L}(), μ, Diago
 AltMvNormal(μ::AbstractVector, ::UniformScaling) = AltMvNormal(Val{:L}(), μ, I)
 
 function logpdf(d::AltMvNormal, x::AbstractVector)
-    @unpack μ, L = d
-    -0.5*length(μ)*log(2*π) - logdet(L) - 0.5*sum(abs2, L \ (x .- μ))
+    @unpack μ, L, logdet_L = d
+    -0.5*length(μ)*log(2*π) - logdet_L - 0.5*sum(abs2, L \ (x .- μ))
 end
 
 function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltMvNormal})
