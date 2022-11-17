@@ -1,6 +1,7 @@
 module AltDistributions
 
-export Fixed, AltMvNormal, LKJL, StdCorrFactor, AltMultinomial, AltBinomial
+export Fixed, AltMvNormal, LKJL, StdCorrFactor, AltMultinomial, AltBinomial,
+    logpdf_C
 
 using ArgCheck: @argcheck
 using Base.Math: cbrt
@@ -180,11 +181,23 @@ struct LKJL{T <: Real}
     end
 end
 
-function logpdf(d::LKJL, L::Union{AbstractTriangular, Diagonal})
+"""
+$(SIGNATURES)
+
+Calculate logdpf + constant for the LKJL distribution for a Cholesky factor of a correlation
+matrix. Note that
+
+1. `L` is not checked to be a valid Cholesky factor of a correlation matrix,
+
+2. the constant is not calculated, to speed up computation --- the intended usage is MCMC
+sampling.
+"""
+function logpdf_C(d::LKJL, L::Union{AbstractTriangular, Diagonal})
+    @argcheck !Base.has_offset_axes(L)
     @unpack η = d
-    z = diag(L)
     n = size(L, 1)
-    sum(log.(z) .* ((n:-1:1) .+ 2*(η-1))) + log(2) * n
+    a = 2*(η-1)
+    sum(i -> log(L[i,i]) * (n - i + a), 2:n)
 end
 
 ####
