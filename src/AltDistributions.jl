@@ -196,6 +196,7 @@ function logpdf_C(d::LKJL, L::Union{AbstractTriangular, Diagonal})
     @argcheck !Base.has_offset_axes(L)
     @unpack η = d
     n = size(L, 1)
+    n ≤ 1 && return zero(eltype(L))
     a = 2*(η-1)
     sum(i -> log(L[i,i]) * (n - i + a), 2:n)
 end
