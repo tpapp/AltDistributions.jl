@@ -60,14 +60,15 @@ end
 ####
 
 @testset "LKJL" begin
-    n = 7
-    Ω, F, _ = randΩFσ(n)
-    η = abs2(randn())
-    J_full = jacobian(lowerdiag_to_vec(F)) do z
-        F = vec_to_lowerdiag(z, n)
-        lowerdiag_to_vec(F*F')
+    for n in 1:8
+        Ω1, F1, _ = randΩFσ(n)
+        Ω2, F2, _ = randΩFσ(n)
+        η = abs2(randn())
+        D1 = LKJL(η)
+        D2 = LKJCholesky(n, η)
+        # free ride on Distributions
+        @test logpdf_C(D1, F2) - logpdf_C(D1, F1) ≈ logpdf(D2, Cholesky(F2)) - logpdf(D2, Cholesky(F1))
     end
-    @test logdet(J_full) + logdet(Ω)*(η-1) ≈ logpdf(LKJL(η), F)
 end
 
 @testset "AltMvNormal" begin
