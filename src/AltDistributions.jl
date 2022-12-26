@@ -151,6 +151,10 @@ function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltMvNormal})
     L * randn(rng, length(μ)) .+ μ
 end
 
+function Base.eltype(::Type{<:AltMvNormal{M,T}}) where {M,T}
+    Vector{promote_type(eltype(M), eltype(T))}
+end
+
 ####
 #### LKJL
 ####
