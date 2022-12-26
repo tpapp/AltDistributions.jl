@@ -141,6 +141,8 @@ end
         zs = reduce(hcat, rand(d, N))
         @test vec(mean(zs, dims = 2)) ≈ μ atol = 0.02
         @test cov(zs, dims = 2) ≈ Σ atol = 0.03
+        z = rand(d)
+        @test z isa Vector{Float64} && all(isfinite, z)
     end
 end
 
