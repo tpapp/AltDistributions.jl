@@ -21,7 +21,7 @@ using SpecialFunctions: logabsbinomial, logfactorial
 ####
 
 """
-Types accepted as a factor `L` of a covariance matrix `Σ=LL'`.
+Julia types accepted as a factor `L` of a covariance matrix `Σ=LL'`.
 """
 const CovarianceFactor = Union{UniformScaling, AbstractMatrix}
 
@@ -102,9 +102,11 @@ Base.@kwdef struct AltMvNormal{M <: AbstractVector,T <: CovarianceFactor, S <: R
     @doc """
     $(SIGNATURES)
 
-    Inner constructor used internally, for specifying `L` directly when the first argument is `Val{:L}`.
+    Inner constructor used internally, for specifying `L` directly when the first argument
+    is `Val{:L}`.
 
-    You **don't want to use this unless you obtain `L` directly**. Use a `Cholesky` factorization instead.
+    You **don't want to use this unless you obtain `L` directly**. Use a `Cholesky`
+    factorization instead.
     """
     function AltMvNormal(::Val{:L}, μ::M, L::T) where {M <: AbstractVector,
                                                        T <: CovarianceFactor}
@@ -129,11 +131,11 @@ Also, see [`StdCorrFactor`](@ref) for formulating `L` from standard deviations a
 Cholesky factor of a *correlation* matrix:
 
 ```julia
-AltMvNormal(μ, StdCorrFactor(σ, S))
+AltMvNormal(Val(:L), μ, StdCorrFactor(σ, S))
 ```
 """
 function AltMvNormal(μ::AbstractVector, Σ::AbstractMatrix)
-    @argcheck issymmetric(Σ) "Σ is not symmetric. Try wrapping in `LinearAlgebra.Symmetric`."
+    @argcheck issymmetric(Σ) "Σ is not symmetric."
     AltMvNormal(μ, cholesky(Σ))
 end
 
