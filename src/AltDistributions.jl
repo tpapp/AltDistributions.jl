@@ -1,3 +1,6 @@
+"""
+See the docstrings of exported symbols.
+"""
 module AltDistributions
 
 export Fixed, AltMvNormal, LKJL, StdCorrFactor, AltMultinomial, AltBinomial,
