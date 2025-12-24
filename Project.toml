@@ -1,6 +1,6 @@
 name = "AltDistributions"
 uuid = "875e7ca2-ab9d-5828-93ae-a098eac53262"
-version = "0.3.2"
+version = "0.3.3"
 authors = ["Tamas K. Papp <tkpapp@gmail.com>"]
 
 [workspace]
