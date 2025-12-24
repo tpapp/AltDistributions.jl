@@ -1,5 +1,8 @@
-using AltDistributions, Test, LinearAlgebra, Distributions, Random
+using AltDistributions, Test, LinearAlgebra, Distributions, Random, StaticArrays
 using ForwardDiff: jacobian
+
+import JET
+JET.report_package(AltDistributions; target_modules = (AltDistributions,))
 
 Random.seed!(1)
 
@@ -67,7 +70,7 @@ end
         D1 = LKJL(η)
         D2 = LKJCholesky(n, η)
         # free ride on Distributions
-        @test logpdf_C(D1, F2) - logpdf_C(D1, F1) ≈ logpdf(D2, Cholesky(F2)) - logpdf(D2, Cholesky(F1))
+        @test @inferred(logpdf_C(D1, F2)) - logpdf_C(D1, F1) ≈ logpdf(D2, Cholesky(F2)) - logpdf(D2, Cholesky(F1))
     end
 end
 
@@ -123,7 +126,7 @@ end
             Σ = L*L'
             G = StdCorrFactor(σ, F)
             x = randn(n)
-            @test logpdf(MvNormal(μ, Σ), x) ≈ logpdf(AltMvNormal(Val(:L), μ, G), x) rtol = 1e-6
+            @test logpdf(MvNormal(μ, Σ), x) ≈ @inferred(logpdf(AltMvNormal(Val(:L), μ, G), x)) rtol = 1e-6
         end
     end
 
@@ -144,6 +147,12 @@ end
         z = rand(d)
         @test z isa Vector{Float64} && all(isfinite, z)
     end
+
+    N = 7
+    v = rand(SVector{N})
+    L = StdCorrFactor(v, LowerTriangular(SMatrix{N,N}(abs.(randn(N^2)))))
+    d = AltMvNormal(Val(:L), v, L)
+    @allocated logpdf(d, v)
 end
 
 @testset "AltMultinomial" begin

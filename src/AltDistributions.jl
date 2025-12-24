@@ -13,7 +13,6 @@ import Distributions: logpdf
 using DocStringExtensions: SIGNATURES
 using LinearAlgebra
 using LinearAlgebra: checksquare, AbstractTriangular
-using Parameters: @unpack
 using Random: SamplerTrivial, Random, AbstractRNG
 import Random: rand
 using LogExpFunctions: xlogy
@@ -94,7 +93,7 @@ get(f::Fixed) = f.value
 #### AltMvNormal
 ####
 
-Base.@kwdef struct AltMvNormal{M <: AbstractVector,T <: CovarianceFactor, S <: Real}
+struct AltMvNormal{M <: AbstractVector,T <: CovarianceFactor, S <: Real}
     "mean"
     μ::M
     "Cholesky factor, `L*L'` is the variance matrix. `L` can be *any* conformable matrix
@@ -147,13 +146,13 @@ AltMvNormal(μ::AbstractVector, Σ::Diagonal) = AltMvNormal(Val{:L}(), μ, Diago
 AltMvNormal(μ::AbstractVector, ::UniformScaling) = AltMvNormal(Val{:L}(), μ, I)
 
 function logpdf(d::AltMvNormal, x::AbstractVector)
-    @unpack μ, L, logdet_L = d
+    (; μ, L, logdet_L) = d
     -0.5*length(μ)*log(2*π) - logdet_L - 0.5*sum(abs2, L \ (x .- μ))
 end
 
 function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltMvNormal})
-    @unpack μ, L = sampler[]
-    L * randn(rng, length(μ)) .+ μ
+    (; μ, L) = sampler[]
+    L * randn(rng, length(μ)) + μ
 end
 
 function Base.eltype(::Type{<:AltMvNormal{M,T}}) where {M,T}
@@ -203,7 +202,7 @@ sampling.
 """
 function logpdf_C(d::LKJL, L::Union{AbstractTriangular, Diagonal})
     @argcheck !Base.has_offset_axes(L)
-    @unpack η = d
+    (; η) = d
     n = size(L, 1)
     n ≤ 1 && return zero(eltype(L))
     a = 2*(η-1)
@@ -226,13 +225,13 @@ struct AltMultinomial{T <: Integer, V <: AbstractVector{<:Real}}
     """
     function AltMultinomial(total_count::T, partial_probabilities::V
                             ) where {T <: Integer, V <: AbstractVector{<:Real}}
-        @argcheck all(partial_probabilities .≥ 0)
+        @argcheck all(x -> x ≥ 0, partial_probabilities)
         new{T,V}(total_count, partial_probabilities)
     end
 end
 
 function logpdf(distribution::AltMultinomial, fixed_counts::Fixed)
-    @unpack partial_probabilities = distribution
+    (; partial_probabilities) = distribution
     counts = get(fixed_counts)
     @argcheck length(counts) == length(partial_probabilities) + 1
     P = eltype(partial_probabilities)
@@ -253,7 +252,7 @@ function logpdf(distribution::AltMultinomial, fixed_counts::Fixed)
 end
 
 function logpdf(distribution::AltMultinomial, counts)
-    @unpack total_count = distribution
+    (; total_count) = distribution
     @argcheck total_count == sum(counts)
     ℓ = logfactorial(total_count)
     for c in counts
@@ -264,7 +263,7 @@ end
 
 function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltMultinomial})
     distribution = sampler[]
-    @unpack total_count, partial_probabilities = distribution
+    (; total_count, partial_probabilities) = distribution
     x = Vector{Int}(undef, length(partial_probabilities) + 1)
     probabilities = vcat(partial_probabilities, 1 - sum(partial_probabilities))
     Distributions.multinom_rand!(rng, total_count, probabilities, x)
@@ -286,7 +285,7 @@ struct AltBinomial{T <: Integer, P <: Real}
 end
 
 function logpdf(distribution::AltBinomial, fixed_count::Fixed{<:Integer})
-    @unpack total_count, probability = distribution
+    (; total_count, probability) = distribution
     k = get(fixed_count)
     xlogy(k, probability) + xlogy(total_count - k, 1 - probability)
 end
@@ -296,7 +295,7 @@ function logpdf(distribution::AltBinomial, count::Integer)
 end
 
 function rand(rng::AbstractRNG, sampler::SamplerTrivial{<:AltBinomial})
-    @unpack total_count, probability = sampler[]
+    (; total_count, probability) = sampler[]
     # this is inefficient, but cheap to implement
     first(rand(rng, AltMultinomial(total_count, [probability])))
 end
